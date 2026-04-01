@@ -1,0 +1,26 @@
+name: Build and Release Gem
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Build gem
+        run: gem build vagrant-qemu.gemspec
+
+      - name: Upload gem to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: vagrant-qemu-*.gem

@@ -171,21 +171,66 @@ module VagrantPlugins
 
       def stop(options)
         if running?
-          if !options[:control_port].nil?
-            Socket.tcp("localhost", options[:control_port], connect_timeout: 5) do |sock|
-              sock.print "system_powerdown\n"
-              sock.close_write
-              sock.read rescue nil
+          force_kill if running?
+
+          # Try graceful shutdown first
+          begin
+            if !options[:control_port].nil?
+              Socket.tcp("localhost", options[:control_port], connect_timeout: 5) do |sock|
+                sock.print "system_powerdown\n"
+                sock.close_write
+                sock.read rescue nil
+              end
+            else
+              id_tmp_dir = @tmp_dir.join(@vm_id)
+              unix_socket_path = id_tmp_dir.join("qemu_socket").to_s
+              Socket.unix(unix_socket_path) do |sock|
+                sock.print "system_powerdown\n"
+                sock.close_write
+                sock.read rescue nil
+              end
             end
-          else
-            id_tmp_dir = @tmp_dir.join(@vm_id)
-            unix_socket_path = id_tmp_dir.join("qemu_socket").to_s
-            Socket.unix(unix_socket_path) do |sock|
-              sock.print "system_powerdown\n"
-              sock.close_write
-              sock.read rescue nil
+
+            # Wait up to 10 seconds for graceful shutdown
+            10.times do
+              break if !running?
+              sleep 1
+            end
+          rescue => e
+            @logger.warn("Graceful shutdown failed: #{e.message}")
+          end
+
+          # Force kill if still running
+          force_kill if running?
+        end
+      end
+
+      def force_kill
+        pid_file = @tmp_dir.join(@vm_id).join("qemu.pid")
+        return unless pid_file.file?
+
+        pid = File.read(pid_file).to_i
+        begin
+          Process.kill(0, pid)
+        rescue Errno::ESRCH
+          return # Already dead
+        end
+
+        $stderr.puts "==> default: Force killing QEMU process (pid=#{pid})"
+        @logger.info("Force killing QEMU process #{pid}")
+        begin
+          Process.kill("KILL", pid)
+          5.times do
+            begin
+              Process.kill(0, pid)
+              sleep 1
+            rescue Errno::ESRCH
+              $stderr.puts "==> default: QEMU process #{pid} killed"
+              break
             end
           end
+        rescue Errno::ESRCH
+          $stderr.puts "==> default: QEMU process #{pid} killed"
         end
       end
 

@@ -3,6 +3,11 @@
 This is a Vagrant plugin that adds a simple QEMU provider to Vagrant, allowing Vagrant
 to control and provision machines using QEMU.
 
+This is a fork of [ppggff/vagrant-qemu](https://github.com/ppggff/vagrant-qemu) with the following additions:
+
+* **`qemu-customkernel` box format** — for VMs that require direct kernel boot (e.g. ARM32 on `virt` machine type, which has no UEFI firmware)
+* **Improved shutdown** — graceful powerdown with timeout, then force-kill to prevent stale PID/socket files across reboots
+
 **Notes: test with Apple Silicon / M1 and CentOS / Ubuntu aarch64 image**
 
 ## Compatible with
@@ -48,10 +53,10 @@ Make sure QEMU is installed, if not:
 brew install qemu
 ```
 
-Install plugin:
+Install plugin from [GitHub Releases](https://github.com/christhomas/vagrant-qemu/releases):
 
 ```
-vagrant plugin install vagrant-qemu
+vagrant plugin install https://github.com/christhomas/vagrant-qemu/releases/download/<version>/vagrant-qemu-<version>.gem
 ```
 
 Prepare a `Vagrantfile`, see [Example](#example), and start:
@@ -65,13 +70,38 @@ Notes:
   see [vagrant doc](https://www.vagrantup.com/docs/synced-folders/smb) for details
 * need username/password to access shared folder
 
-## Box format
+## Box formats
+
+### `libvirt` (default)
 
 Same as [vagrant-libvirt version-1](https://github.com/vagrant-libvirt/vagrant-libvirt#version-1):
 
 * qcow2 image file named `box.img`
 * `metadata.json` file describing box image (provider, virtual_size, format)
 * `Vagrantfile` that does default settings
+
+Uses UEFI firmware (`edk2-aarch64-code.fd`) for boot — works for aarch64 machines.
+
+### `qemu-customkernel`
+
+For machines that cannot use UEFI and require direct kernel boot (e.g. ARM32 `virt` machine type):
+
+* qcow2 image file named `box.img`
+* `vmlinuz` — kernel image
+* `initrd.img` — initial ramdisk
+* `metadata.json` with `"provider": "qemu-customkernel"`
+* `Vagrantfile` that does default settings (including `-kernel` and `-initrd` QEMU args)
+
+This format is needed when the target architecture has no UEFI firmware available in QEMU, so the kernel and initrd must be supplied externally and passed to QEMU via `-kernel` and `-initrd` flags.
+
+Example `metadata.json`:
+```json
+{
+  "provider": "qemu-customkernel",
+  "format": "qcow2",
+  "architecture": "arm"
+}
+```
 
 ## Configuration
 
@@ -346,7 +376,7 @@ Ensure your development environment has the necessary tools installed, such as:
 
 1. Clone this repository:
     ```sh
-    git clone https://github.com/ppggff/vagrant-qemu.git
+    git clone https://github.com/christhomas/vagrant-qemu.git
     cd vagrant-qemu
     ```
 
