@@ -25,6 +25,7 @@ module VagrantPlugins
             end
 
             b2.use StopInstance
+            b2.use SyncedFolderCleanup
           end
         end
       end
@@ -128,6 +129,7 @@ module VagrantPlugins
             b1.use SetHostname
             b1.use StartInstance
             b1.use WaitForCommunicator, [:running]
+            b1.use MountVirtioFS
           end
         end
       end
@@ -176,6 +178,7 @@ module VagrantPlugins
       autoload :TimedProvision, action_root.join("timed_provision") # some plugins now expect this action to exist
       autoload :WarnNetworks, action_root.join("warn_networks")
       autoload :PrepareForwardedPortCollisionParams, action_root.join("prepare_forwarded_port_collision_params")
+      autoload :MountVirtioFS, action_root.join("mount_virtiofs")
     end
   end
 end
