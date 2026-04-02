@@ -129,6 +129,13 @@ module VagrantPlugins
         {}
       end
 
+      VIRTIOFSD_SEARCH_PATHS = %w(
+        /opt/homebrew/bin/virtiofsd
+        /usr/local/bin/virtiofsd
+        /usr/libexec/virtiofsd
+        /usr/lib/qemu/virtiofsd
+      ).freeze
+
       def resolve_binary(config_path, fallback_name)
         if config_path && !config_path.empty?
           return config_path if File.executable?(config_path)
@@ -137,6 +144,13 @@ module VagrantPlugins
         if fallback_name
           path = `which #{fallback_name} 2>/dev/null`.strip
           return path unless path.empty?
+
+          # Check known paths for virtiofsd
+          if fallback_name == "virtiofsd"
+            VIRTIOFSD_SEARCH_PATHS.each do |p|
+              return p if File.executable?(p)
+            end
+          end
         end
 
         nil
