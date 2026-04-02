@@ -59,9 +59,16 @@ module VagrantPlugins
             "--shared-dir=#{hostpath}",
             "--sandbox=none",
             "--inode-file-handles=never",
-            "--translate-uid", "map:#{machine.provider_config.virtiofs_guest_uid}:#{host_uid}:1",
-            "--translate-gid", "map:#{machine.provider_config.virtiofs_guest_gid}:#{host_gid}:1",
           ]
+
+          # Add UID/GID mapping if virtiofsd supports it (v1.13+)
+          translate_supported = `#{virtiofsd} --help 2>&1`.include?("--translate-uid")
+          if translate_supported
+            virtiofsd_args += [
+              "--translate-uid", "map:#{machine.provider_config.virtiofs_guest_uid}:#{host_uid}:1",
+              "--translate-gid", "map:#{machine.provider_config.virtiofs_guest_gid}:#{host_gid}:1",
+            ]
+          end
           pid = spawn(*virtiofsd_args, [:out, :err] => [log_file, "w"])
           Process.detach(pid)
 
