@@ -3,6 +3,7 @@
 
 # editors
 *.swp
+.history
 
 # Bundler/Rubygems
 *.gem

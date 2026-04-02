@@ -1,3 +1,4 @@
+require "json"
 require "vagrant"
 
 module VagrantPlugins
@@ -16,6 +17,9 @@ module VagrantPlugins
       attr_accessor :image_path
       attr_accessor :qemu_bin
       attr_accessor :qemu_dir
+      attr_accessor :virtiofsd_bin
+      attr_accessor :virtiofs_guest_uid
+      attr_accessor :virtiofs_guest_gid
       attr_accessor :disk_resize
       attr_accessor :extra_qemu_args
       attr_accessor :extra_netdev_args
@@ -26,6 +30,9 @@ module VagrantPlugins
       attr_accessor :firmware_format
       attr_accessor :other_default
       attr_accessor :extra_image_opts
+
+      # Path to the gem-level config file
+      GEM_CONFIG_FILE = File.join(File.dirname(__FILE__), "..", "..", "config.json")
 
       def initialize
         @ssh_host = UNSET_VALUE
@@ -41,6 +48,9 @@ module VagrantPlugins
         @image_path = UNSET_VALUE
         @qemu_bin = UNSET_VALUE
         @qemu_dir = UNSET_VALUE
+        @virtiofsd_bin = UNSET_VALUE
+        @virtiofs_guest_uid = UNSET_VALUE
+        @virtiofs_guest_gid = UNSET_VALUE
         @disk_resize = UNSET_VALUE
         @extra_qemu_args = UNSET_VALUE
         @extra_netdev_args = UNSET_VALUE
@@ -59,10 +69,17 @@ module VagrantPlugins
 
       def merge(other)
         super.tap do |result|
+          # Merge extra_qemu_args from both configs instead of overwriting
+          if other.extra_qemu_args != UNSET_VALUE && @extra_qemu_args != UNSET_VALUE
+            result.extra_qemu_args = @extra_qemu_args + other.extra_qemu_args
+          end
         end
       end
 
       def finalize!
+        # Load gem-level config file defaults
+        gem_config = load_gem_config
+
         @ssh_host = "127.0.0.1" if @ssh_host == UNSET_VALUE
         @ssh_port = 50022 if @ssh_port == UNSET_VALUE
         @ssh_auto_correct = false if @ssh_auto_correct == UNSET_VALUE
@@ -74,8 +91,12 @@ module VagrantPlugins
         @net_device = "virtio-net-device" if @net_device == UNSET_VALUE
         @drive_interface = "virtio" if @drive_interface == UNSET_VALUE
         @image_path = nil if @image_path == UNSET_VALUE
-        @qemu_bin = nil if @qemu_bin == UNSET_VALUE
-        @qemu_dir = "/opt/homebrew/share/qemu" if @qemu_dir == UNSET_VALUE
+        @qemu_bin = resolve_binary(gem_config["qemu_bin"], "qemu") if @qemu_bin == UNSET_VALUE
+        # TODO: I am not happy that we hardcode this qemu_dir fallback value, I think maybe there is a better option
+        @qemu_dir = resolve_directory(gem_config["qemu_dir"], "/opt/homebrew/share/qemu") if @qemu_dir == UNSET_VALUE
+        @virtiofsd_bin = resolve_binary(gem_config["virtiofsd_bin"], "virtiofsd") if @virtiofsd_bin == UNSET_VALUE
+        @virtiofs_guest_uid = 1000 if @virtiofs_guest_uid == UNSET_VALUE
+        @virtiofs_guest_gid = 1000 if @virtiofs_guest_gid == UNSET_VALUE
         @disk_resize = nil if @disk_resize == UNSET_VALUE
         @extra_qemu_args = [] if @extra_qemu_args == UNSET_VALUE
         @extra_netdev_args = nil if @extra_netdev_args == UNSET_VALUE
@@ -95,6 +116,38 @@ module VagrantPlugins
         # errors = _detected_errors
         errors = []
         { "QEMU Provider" => errors }
+      end
+
+      private
+
+      def load_gem_config
+        config_path = File.expand_path(GEM_CONFIG_FILE)
+        return {} unless File.exist?(config_path)
+
+        JSON.parse(File.read(config_path))
+      rescue JSON::ParserError
+        {}
+      end
+
+      def resolve_binary(config_path, fallback_name)
+        if config_path && !config_path.empty?
+          return config_path if File.executable?(config_path)
+        end
+
+        if fallback_name
+          path = `which #{fallback_name} 2>/dev/null`.strip
+          return path unless path.empty?
+        end
+
+        nil
+      end
+
+      def resolve_directory(config_path, default_path)
+        if config_path && !config_path.empty? && Dir.exist?(config_path)
+          return config_path
+        end
+
+        default_path
       end
     end
   end

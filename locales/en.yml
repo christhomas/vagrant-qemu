@@ -58,5 +58,16 @@ en:
         Invalid config.
 
         Error: %{err}
+      virtiofsd_not_found: |-
+        virtiofsd binary not found. Either:
+          1. Install a compatible virtiofsd package
+          2. Set virtiofsd_bin in your Vagrantfile provider config
+          3. Place a config.json in the vagrant-qemu gem directory
+      virtiofsd_start_failed: |-
+        virtiofsd failed to start for %{hostpath}.
+        The socket file never appeared. Check the log for details:
+          %{log_file}
+        Test virtiofsd manually:
+          virtiofsd --socket-path=/tmp/test.sock --shared-dir=%{hostpath} --sandbox none
       floppy_unsupported: |-
         Floppy disks not supported
