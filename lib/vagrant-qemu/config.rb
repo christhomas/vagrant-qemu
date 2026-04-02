@@ -93,7 +93,10 @@ module VagrantPlugins
         @image_path = nil if @image_path == UNSET_VALUE
         @qemu_bin = resolve_binary(gem_config["qemu_bin"], "qemu") if @qemu_bin == UNSET_VALUE
         # TODO: I am not happy that we hardcode this qemu_dir fallback value, I think maybe there is a better option
-        @qemu_dir = resolve_directory(gem_config["qemu_dir"], "/opt/homebrew/share/qemu") if @qemu_dir == UNSET_VALUE
+        if @qemu_dir == UNSET_VALUE
+          default_qemu_dir = RUBY_PLATFORM.include?("darwin") ? "/opt/homebrew/share/qemu" : "/usr/share/qemu"
+          @qemu_dir = resolve_directory(gem_config["qemu_dir"], default_qemu_dir)
+        end
         @virtiofsd_bin = resolve_binary(gem_config["virtiofsd_bin"], "virtiofsd") if @virtiofsd_bin == UNSET_VALUE
         @virtiofs_guest_uid = 1000 if @virtiofs_guest_uid == UNSET_VALUE
         @virtiofs_guest_gid = 1000 if @virtiofs_guest_gid == UNSET_VALUE

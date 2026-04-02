@@ -61,12 +61,14 @@ module VagrantPlugins
             @logger.info("Found box image path: #{img_info}")
           end
 
-          qemu_dir = Pathname.new(env[:machine].provider_config.qemu_dir)
-          if !qemu_dir.directory?
-            @logger.error("Invalid qemu dir: #{qemu_dir}")
-            raise Errors::ConfigError, err: "Invalid qemu dir: #{qemu_dir}"
-          else
-            @logger.info("Found qemu dir: #{qemu_dir}")
+          if env[:machine].provider_config.firmware_format
+            qemu_dir = Pathname.new(env[:machine].provider_config.qemu_dir)
+            if !qemu_dir.directory?
+              @logger.error("Invalid qemu dir: #{qemu_dir}")
+              raise Errors::ConfigError, err: "Invalid qemu dir: #{qemu_dir}"
+            else
+              @logger.info("Found qemu dir: #{qemu_dir}")
+            end
           end
 
           env[:ui].output("Importing a QEMU instance")
