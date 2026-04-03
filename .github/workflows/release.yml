@@ -21,8 +21,14 @@ jobs:
       - name: Build gem
         run: gem build vagrant-qemu-christhomas.gemspec
 
+      - name: Configure RubyGems trusted publisher
+        uses: rubygems/configure-rubygems-credentials@main
+        with:
+          gem-server: https://rubygems.org
+          audience: rubygems.org
+
       - name: Publish to RubyGems
-        uses: rubygems/release-gem@v1
+        run: gem push vagrant-qemu-christhomas-*.gem
 
       - name: Upload gem to GitHub Release
         uses: softprops/action-gh-release@v2
