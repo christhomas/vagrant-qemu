@@ -2,7 +2,7 @@ $:.unshift File.expand_path("../lib", __FILE__)
 require "vagrant-qemu/version"
 
 Gem::Specification.new do |s|
-  s.name          = "vagrant-qemu"
+  s.name          = "vagrant-qemu-christhomas"
   s.version       = VagrantPlugins::QEMU::VERSION
   s.platform      = Gem::Platform::RUBY
   s.license       = "MIT"

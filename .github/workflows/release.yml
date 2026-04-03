@@ -19,7 +19,7 @@ jobs:
           ruby-version: '3.2'
 
       - name: Build gem
-        run: gem build vagrant-qemu.gemspec
+        run: gem build vagrant-qemu-christhomas.gemspec
 
       - name: Publish to RubyGems
         uses: rubygems/release-gem@v1
@@ -27,4 +27,4 @@ jobs:
       - name: Upload gem to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: vagrant-qemu-*.gem
+          files: vagrant-qemu-christhomas-*.gem
