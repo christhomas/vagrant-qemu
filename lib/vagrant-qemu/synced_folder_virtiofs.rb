@@ -69,6 +69,9 @@ module VagrantPlugins
               "--translate-gid", "map:#{machine.provider_config.virtiofs_guest_gid}:#{host_gid}:1",
             ]
           end
+          # Append user-supplied extra virtiofsd args from provider config
+          extra_vfs = machine.provider_config.extra_virtiofsd_args
+          virtiofsd_args += extra_vfs if extra_vfs.is_a?(Array) && !extra_vfs.empty?
           pid = spawn(*virtiofsd_args, [:out, :err] => [log_file, "w"])
           Process.detach(pid)
 

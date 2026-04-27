@@ -20,6 +20,7 @@ module VagrantPlugins
       attr_accessor :virtiofsd_bin
       attr_accessor :virtiofs_guest_uid
       attr_accessor :virtiofs_guest_gid
+      attr_accessor :extra_virtiofsd_args
       attr_accessor :disk_resize
       attr_accessor :extra_qemu_args
       attr_accessor :extra_netdev_args
@@ -51,6 +52,7 @@ module VagrantPlugins
         @virtiofsd_bin = UNSET_VALUE
         @virtiofs_guest_uid = UNSET_VALUE
         @virtiofs_guest_gid = UNSET_VALUE
+        @extra_virtiofsd_args = UNSET_VALUE
         @disk_resize = UNSET_VALUE
         @extra_qemu_args = UNSET_VALUE
         @extra_netdev_args = UNSET_VALUE
@@ -100,6 +102,7 @@ module VagrantPlugins
         @virtiofsd_bin = resolve_binary(gem_config["virtiofsd_bin"], "virtiofsd") if @virtiofsd_bin == UNSET_VALUE
         @virtiofs_guest_uid = 1000 if @virtiofs_guest_uid == UNSET_VALUE
         @virtiofs_guest_gid = 1000 if @virtiofs_guest_gid == UNSET_VALUE
+        @extra_virtiofsd_args = [] if @extra_virtiofsd_args == UNSET_VALUE
         @disk_resize = nil if @disk_resize == UNSET_VALUE
         @extra_qemu_args = [] if @extra_qemu_args == UNSET_VALUE
         @extra_netdev_args = nil if @extra_netdev_args == UNSET_VALUE
